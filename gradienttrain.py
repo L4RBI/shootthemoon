@@ -169,8 +169,8 @@ def main():
     #instancing the optims
     opt_disc = optim.Adam(disc.parameters(), lr=config.LEARNING_RATE*float(sys.argv[8]), betas=(0.5, 0.999))
     opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE*float(sys.argv[8]), betas=(0.5, 0.999))
-    schedulergen = torch.optim.lr_scheduler.ExponentialLR(opt_gen , gamma=0.1)
-    schedulerdisc = torch.optim.lr_scheduler.ExponentialLR(opt_disc, gamma=0.1)
+    #schedulergen = torch.optim.lr_scheduler.ExponentialLR(opt_gen , gamma=0.1)
+    #schedulerdisc = torch.optim.lr_scheduler.ExponentialLR(opt_disc, gamma=0.1)
     #instancing the Loss-functions
     BCE = nn.BCEWithLogitsLoss()
     if sys.argv[2]=="L1":
@@ -224,10 +224,10 @@ def main():
         save_checkpoint(disc, opt_disc, epoch, filename=config.CHECKPOINT_DISC)
 
         save_some_examples(gen, test_loader, epoch, folder="evaluation")
-        schedulergen.step()
-        schedulerdisc.step()
-        print("lr generateur",opt_gen.param_groups[0]["lr"])
-        print("lr discriminateur", opt_gen.param_groups[0]["lr"])
+        #schedulergen.step()
+        #schedulerdisc.step()
+        #print("lr generateur",opt_gen.param_groups[0]["lr"])
+        #print("lr discriminateur", opt_gen.param_groups[0]["lr"])
 
 
 if __name__ == "__main__":
