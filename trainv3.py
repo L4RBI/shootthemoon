@@ -67,12 +67,12 @@ def train_fn(
 
 
             with torch.no_grad():
-                plusloss= criterion(y_fake * 0.5 + 0.5 ,y * 0.5 + 0.5 )
+                plusloss= int(sys.argv[3]) * criterion(y_fake * 0.5 + 0.5 ,y * 0.5 + 0.5 )
             if sys.argv[2]=="L1":
                 L1 = l1_loss(y_fake, y) * int(sys.argv[3])
             else:
                 L1 = (1 - l1_loss((y_fake.type(torch.DoubleTensor) + 1) / 2, (y.type(torch.DoubleTensor) + 1) / 2)) * int(sys.argv[3])
-            G_loss = G_fake_loss + L1 + 3 * plusloss
+            G_loss = G_fake_loss + L1 + plusloss
 
         opt_gen.zero_grad()
         g_scaler.scale(G_loss).backward()
@@ -80,13 +80,15 @@ def train_fn(
         g_scaler.update()
 
         if idx % 10 == 0:
-            writer.add_scalar("L1 train loss",L1.item()/config.L1_LAMBDA,epoch*(len(loop))+idx)
+            writer.add_scalar("L1 train loss",L1.item()/int(sys.argv[3]),epoch*(len(loop))+idx)
+            writer.add_scalar("GMSD train loss",plusloss.item()/int(sys.argv[3]),epoch*(len(loop))+idx)
             writer.add_scalar("D_real train loss", torch.sigmoid(D_real).mean().item(), epoch * (len(loop)) + idx)
             writer.add_scalar("D_fake train loss", torch.sigmoid(D_fake).mean().item(), epoch * (len(loop)) + idx)
             loop.set_postfix(
                 D_real=torch.sigmoid(D_real).mean().item(),
                 D_fake=torch.sigmoid(D_fake).mean().item(),
-                L1    =L1.item()
+                L1    =L1.item()/int(sys.argv[3]),
+                GMSD = plusloss.item()/int(sys.argv[3])
             )
 def test_fn(
     disc, gen, loader, l1_loss, bce, epoch=0
@@ -190,7 +192,7 @@ def main():
     #evauation data loading
     best=10000000
     resultat=1
-    for epoch in range(sys.argv[9]):
+    for epoch in range(int(sys.argv[9])):
         train_fn(
            disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, criterion, g_scaler, d_scaler,epoch=epoch
         )

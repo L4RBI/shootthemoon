@@ -1,0 +1,2 @@
+cd C:\Users\dell\Desktop\grad\pixtopix
+python trainv3.py "C:\Users\dell\Desktop\safe" "L1" 10 32 0 "none" "none" 1 15
