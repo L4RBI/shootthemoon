@@ -190,7 +190,7 @@ def main():
     #evauation data loading
     best=10000000
     resultat=1
-    for epoch in range(config.NUM_EPOCHS):
+    for epoch in range(sys.argv[9]):
         train_fn(
            disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, criterion, g_scaler, d_scaler,epoch=epoch
         )
