@@ -30,12 +30,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if not os.path.exists("evaluation"):
     os.mkdir("evaluation")
 
-writer=SummaryWriter("train{}-{}".format(localtime().tm_mon,localtime().tm_mday))
+
 torch.backends.cudnn.benchmark = True
 
 
 def train_fn(
-    disc, gen, loader, opt_disc, opt_gen, l1_loss, bce, criterion, g_scaler, d_scaler,epoch=0
+    disc, gen, loader, opt_disc, opt_gen, l1_loss, bce, criterion, g_scaler, d_scaler,writer, epoch=0
 ):
     loop = tqdm(loader, leave=True)
 
@@ -71,7 +71,7 @@ def train_fn(
             if sys.argv[2]=="L1":
                 L1 = l1_loss(y_fake, y) * int(sys.argv[3])
             else:
-                L1 = (1 - l1_loss((y_fake.type(torch.DoubleTensor) + 1) / 2, (y.type(torch.DoubleTensor) + 1) / 2)) * int(sys.argv[3])
+                L1 = (1 - l1_loss((y_fake.double() + 1) / 2, (y.double() + 1) / 2)) * int(sys.argv[3])
             G_loss = G_fake_loss + L1 + plusloss
 
         opt_gen.zero_grad()
@@ -91,7 +91,7 @@ def train_fn(
                 GMSD = plusloss.item()/int(sys.argv[3])
             )
 def test_fn(
-    disc, gen, loader, l1_loss, bce, epoch=0
+    disc, gen, loader, l1_loss, bce, writer, epoch=0
 ):
     loop = tqdm(loader, leave=True)
     disc.eval()
@@ -120,7 +120,7 @@ def test_fn(
             if sys.argv[2] == "L1":
                 L1 = l1_loss(y_fake, y) * int(sys.argv[3])
             else:
-                L1 = (1 - l1_loss((y_fake.type(torch.DoubleTensor) + 1) / 2, (y.type(torch.DoubleTensor) + 1) / 2)) * int(sys.argv[3])
+                L1 = (1 - l1_loss((y_fake.double() + 1) / 2, (y.double() + 1) / 2)) * int(sys.argv[3])
             G_loss = G_fake_loss + L1
             resultat.append(L1.item())
 
@@ -147,6 +147,7 @@ def main():
     #instancing the optims
     opt_disc = optim.Adam(disc.parameters(), lr=config.LEARNING_RATE*float(sys.argv[8]), betas=(0.5, 0.999))
     opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE*float(sys.argv[8]), betas=(0.5, 0.999))
+    writer=SummaryWriter("train{}-{}".format(localtime().tm_mon,localtime().tm_mday))
     #schedulergen = torch.optim.lr_scheduler.ExponentialLR(opt_gen , gamma=0.1)
     #schedulerdisc = torch.optim.lr_scheduler.ExponentialLR(opt_disc, gamma=0.1)
     #instancing the Loss-functions
@@ -194,9 +195,9 @@ def main():
     resultat=1
     for epoch in range(int(sys.argv[9])):
         train_fn(
-           disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, criterion, g_scaler, d_scaler,epoch=epoch
+           disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, criterion, g_scaler, d_scaler,writer,epoch=epoch
         )
-        resultat=test_fn(disc, gen, test_loader,  L1_LOSS, BCE, epoch=epoch)
+        resultat=test_fn(disc, gen, test_loader,  L1_LOSS, BCE,writer, epoch=epoch)
         if best>resultat:
             print("improvement of the loss from {} to {}\n\n\n".format(best,resultat))
             best = resultat
