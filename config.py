@@ -12,7 +12,7 @@ VAL_DIR = r'E:\KAIST-dataset\kaist-cvpr15\images'
 #the list of models implemented.
 MODEL_LIST = ["ResUnet", "Unet"]
 #choosing the model to train.
-MODEL = MODEL_LIST[0]
+MODEL = MODEL_LIST[1]
 #hyper-parameters
 LEARNING_RATE = 2e-4
 BATCH_SIZE =1

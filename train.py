@@ -163,6 +163,13 @@ def main():
         shuffle=True,
         num_workers=config.NUM_WORKERS,
     )
+    eval_dataset = depthset(path=sys.argv[1],depthpath=sys.argv[9],train=False, Listset=config.DTRAIN_LIST if sys.argv[5]=="0"else config.NTRAIN_LIST, shuffle=True)
+    eval_loader = DataLoader(
+        eval_dataset,
+        batch_size=int(sys.argv[4]),
+        shuffle=False,
+        num_workers=config.NUM_WORKERS,
+    )
     #enabling MultiPrecision Mode, the optimise performance
     g_scaler = torch.cuda.amp.GradScaler()
     d_scaler = torch.cuda.amp.GradScaler()
@@ -182,7 +189,7 @@ def main():
         save_checkpoint(gen, opt_gen, epoch, filename=config.CHECKPOINT_GEN)
         save_checkpoint(disc, opt_disc, epoch, filename=config.CHECKPOINT_DISC)
 
-        save_some_examples(gen, test_loader, epoch, folder="evaluation")
+        save_some_examples(gen, eval_loader, epoch, folder="evaluation")
         schedulergen.step()
         schedulerdisc.step()
         print("lr generateur",opt_gen.param_groups[0]["lr"])
