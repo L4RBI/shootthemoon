@@ -149,21 +149,21 @@ def main():
 
     #training data loading
 
-    train_dataset = depthset(path=sys.argv[1],depthpath=sys.argv[9], Listset=config.DTRAIN_LIST if sys.argv[5]=="0"else config.NTRAIN_LIST)
+    train_dataset = Kaiset(path=sys.argv[1], Listset=config.DTRAIN_LIST if sys.argv[5]=="0"else config.NTRAIN_LIST)
     train_loader = DataLoader(
         train_dataset,
         batch_size=int(sys.argv[4]),
         shuffle=True,
         num_workers=config.NUM_WORKERS,
     )
-    test_dataset = depthset(path=sys.argv[1],depthpath=sys.argv[9],train=False, Listset=config.DTRAIN_LIST if sys.argv[5]=="0"else config.NTRAIN_LIST)
+    test_dataset = Kaiset(path=sys.argv[1],train=False, Listset=config.DTRAIN_LIST if sys.argv[5]=="0"else config.NTRAIN_LIST)
     test_loader = DataLoader(
         test_dataset,
         batch_size=int(sys.argv[4]),
         shuffle=True,
         num_workers=config.NUM_WORKERS,
     )
-    eval_dataset = depthset(path=sys.argv[1],depthpath=sys.argv[9],train=False, Listset=config.DTRAIN_LIST if sys.argv[5]=="0"else config.NTRAIN_LIST, shuffle=True)
+    eval_dataset = Kaiset(path=sys.argv[1],train=False, Listset=config.DTRAIN_LIST if sys.argv[5]=="0"else config.NTRAIN_LIST, shuffle=True)
     eval_loader = DataLoader(
         eval_dataset,
         batch_size=int(sys.argv[4]),
