@@ -54,12 +54,11 @@ class Gradient_Net(nn.Module):
 if not os.path.exists("evaluation"):
     os.mkdir("evaluation")
 g=Gradient_Net(int(sys.argv[4]))
-writer=SummaryWriter("train{}-{}".format(localtime().tm_mon,localtime().tm_mday))
 torch.backends.cudnn.benchmark = True
 
 
 def train_fn(
-    disc, gen, loader, opt_disc, opt_gen, l1_loss, bce, g_scaler, d_scaler,epoch=0
+    writer, disc, gen, loader, opt_disc, opt_gen, l1_loss, bce, g_scaler, d_scaler,epoch=0
 ):
     loop = tqdm(loader, leave=True)
 
@@ -95,7 +94,7 @@ def train_fn(
             if sys.argv[2]=="L1":
                 L1 = l1_loss(y_fake, y) * int(sys.argv[3])
             else:
-                L1 = (1 - l1_loss((y_fake.type(torch.DoubleTensor) + 1) / 2, (y.type(torch.DoubleTensor) + 1) / 2)) * int(sys.argv[3])
+                L1 = (1 - l1_loss((y_fake.double() + 1) / 2, (y.double() + 1) / 2)) * int(sys.argv[3])
             G_loss = G_fake_loss + L1 + 3 * plusloss
 
         opt_gen.zero_grad()
@@ -113,7 +112,7 @@ def train_fn(
                 L1    =L1.item()
             )
 def test_fn(
-    disc, gen, loader, l1_loss, bce, epoch=0
+    writer, disc, gen, loader, l1_loss, bce, epoch=0
 ):
     loop = tqdm(loader, leave=True)
     disc.eval()
@@ -142,7 +141,7 @@ def test_fn(
             if sys.argv[2] == "L1":
                 L1 = l1_loss(y_fake, y) * int(sys.argv[3])
             else:
-                L1 = (1 - l1_loss((y_fake.type(torch.DoubleTensor) + 1) / 2, (y.type(torch.DoubleTensor) + 1) / 2)) * int(sys.argv[3])
+                L1 = (1 - l1_loss((y_fake.double() + 1) / 2, (y.double() + 1) / 2)) * int(sys.argv[3])
             G_loss = G_fake_loss + L1
             resultat.append(L1.item())
 
@@ -161,6 +160,8 @@ def test_fn(
     gen.train()
     return torch.tensor(resultat).mean()
 def main():
+    writer=SummaryWriter("train{}-{}".format(localtime().tm_mon,localtime().tm_mday))
+
     #instancing the models
     disc = Discriminator(in_channels=3).to(config.DEVICE)
     #print(disc)
@@ -204,26 +205,33 @@ def main():
         shuffle=True,
         num_workers=config.NUM_WORKERS,
     )
+    eval_dataset = Kaiset(path=sys.argv[1],train=False, Listset=config.DTRAIN_LIST if sys.argv[5]=="0"else config.NTRAIN_LIST, shuffle=True)
+    eval_loader = DataLoader(
+        eval_dataset,
+        batch_size=int(sys.argv[4]),
+        shuffle=False,
+        num_workers=config.NUM_WORKERS,
+    )
     #enabling MultiPrecision Mode, the optimise performance
     g_scaler = torch.cuda.amp.GradScaler()
     d_scaler = torch.cuda.amp.GradScaler()
+
 
     #evauation data loading
     best=10000000
     resultat=1
     for epoch in range(config.NUM_EPOCHS):
-        save_some_examples(gen, test_loader, epoch, folder="evaluation")
         train_fn(
-           disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, g_scaler, d_scaler,epoch=epoch
+           writer, disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, g_scaler, d_scaler,epoch=epoch
         )
-        resultat=test_fn(disc, gen, test_loader,  L1_LOSS, BCE, epoch=epoch)
+        resultat=test_fn(writer, disc, gen, test_loader,  L1_LOSS, BCE, epoch=epoch)
         if best>resultat:
             print("improvement of the loss from {} to {}\n\n\n".format(best,resultat))
             best = resultat
         save_checkpoint(gen, opt_gen, epoch, filename=config.CHECKPOINT_GEN)
         save_checkpoint(disc, opt_disc, epoch, filename=config.CHECKPOINT_DISC)
 
-        save_some_examples(gen, test_loader, epoch, folder="evaluation")
+        save_some_examples(gen, eval_loader, epoch, folder="evaluation")
         #schedulergen.step()
         #schedulerdisc.step()
         #print("lr generateur",opt_gen.param_groups[0]["lr"])

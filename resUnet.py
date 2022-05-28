@@ -57,13 +57,13 @@ class Generator(nn.Module):
 
         self.bridge = ResidualConv(filters[2], filters[3], 2, 1)
 
-        self.upsample_1 = Upsample((64, 64))
+        self.upsample_1 = Upsample((32, 32))
         self.up_residual_conv1 = ResidualConv(filters[3] + filters[2], filters[2], 1, 1)
 
-        self.upsample_2 = Upsample((128, 128))
+        self.upsample_2 = Upsample((64, 64))
         self.up_residual_conv2 = ResidualConv(filters[2] + filters[1], filters[1], 1, 1)
 
-        self.upsample_3 = Upsample((256, 256))
+        self.upsample_3 = Upsample((128, 128))
         self.up_residual_conv3 = ResidualConv(filters[1] + filters[0], filters[0], 1, 1)
 
         self.output_layer = nn.Sequential(

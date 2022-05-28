@@ -19,12 +19,11 @@ from time import localtime
 import os
 if not os.path.exists("evaluation"):
     os.mkdir("evaluation")
-writer=SummaryWriter("train{}-{}".format(localtime().tm_mon,localtime().tm_mday))
 torch.backends.cudnn.benchmark = True
 
 
 def train_fn(
-    disc, gen, loader, opt_disc, opt_gen, l1_loss, bce, g_scaler, d_scaler,epoch=0
+    writer, disc, gen, loader, opt_disc, opt_gen, l1_loss, bce, g_scaler, d_scaler,epoch=0
 ):
     loop = tqdm(loader, leave=True)
 
@@ -50,7 +49,6 @@ def train_fn(
         with torch.cuda.amp.autocast():
             D_fake = disc(x, y_fake)
             G_fake_loss = bce(D_fake, torch.ones_like(D_fake))
-            print()
             if sys.argv[2]=="L1":
                 L1 = l1_loss(y_fake, y) * int(sys.argv[3])
             else:
@@ -72,7 +70,7 @@ def train_fn(
                 L1    =L1.item()
             )
 def test_fn(
-    disc, gen, loader, l1_loss, bce, epoch=0
+    writer, disc, gen, loader, l1_loss, bce, epoch=0
 ):
     loop = tqdm(loader, leave=True)
     disc.eval()
@@ -120,6 +118,7 @@ def test_fn(
     gen.train()
     return torch.tensor(resultat).mean()
 def main():
+    writer=SummaryWriter("train{}-{}".format(localtime().tm_mon,localtime().tm_mday))
     #instancing the models
     disc = Discriminator(in_channels=3).to(config.DEVICE)
     #print(disc)
@@ -128,8 +127,6 @@ def main():
     #instancing the optims
     opt_disc = optim.Adam(disc.parameters(), lr=config.LEARNING_RATE*float(sys.argv[8]), betas=(0.5, 0.999))
     opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE*float(sys.argv[8]), betas=(0.5, 0.999))
-    schedulergen = torch.optim.lr_scheduler.ExponentialLR(opt_gen , gamma=0.1)
-    schedulerdisc = torch.optim.lr_scheduler.ExponentialLR(opt_disc, gamma=0.1)
     #instancing the Loss-functions
     BCE = nn.BCEWithLogitsLoss()
     if sys.argv[2]=="L1":
@@ -180,9 +177,9 @@ def main():
     for epoch in range(config.NUM_EPOCHS):
         save_some_examples(gen, test_loader, epoch, folder="evaluation")
         train_fn(
-           disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, g_scaler, d_scaler,epoch=epoch
+           writer, disc, gen, train_loader, opt_disc, opt_gen, L1_LOSS, BCE, g_scaler, d_scaler,epoch=epoch
         )
-        resultat=test_fn(disc, gen, test_loader,  L1_LOSS, BCE, epoch=epoch)
+        resultat=test_fn(writer, disc, gen, test_loader,  L1_LOSS, BCE, epoch=epoch)
         if best>resultat:
             print("improvement of the loss from {} to {}\n\n\n".format(best,resultat))
             best = resultat
@@ -190,8 +187,7 @@ def main():
         save_checkpoint(disc, opt_disc, epoch, filename=config.CHECKPOINT_DISC)
 
         save_some_examples(gen, eval_loader, epoch, folder="evaluation")
-        schedulergen.step()
-        schedulerdisc.step()
+
         print("lr generateur",opt_gen.param_groups[0]["lr"])
         print("lr discriminateur", opt_gen.param_groups[0]["lr"])
 
