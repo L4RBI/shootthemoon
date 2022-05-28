@@ -12,7 +12,7 @@ VAL_DIR = r'E:\KAIST-dataset\kaist-cvpr15\images'
 #the list of models implemented.
 MODEL_LIST = ["ResUnet", "Unet"]
 #choosing the model to train.
-MODEL = MODEL_LIST[0]
+MODEL = MODEL_LIST[1]
 #hyper-parameters
 LEARNING_RATE = 2e-4
 BATCH_SIZE =1
@@ -35,17 +35,11 @@ CHECKPOINT_DISC = "disc.pth.tar"
 CHECKPOINT_GEN = "gen.pth.tar"
 
 #the data pre-processing used.
-# transform = transforms.Compose([
-#         transforms.Resize((256, 256)),
-#         transforms.ToTensor(),
-#         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-# transform2 = transforms.Compose([
-#         transforms.Resize((256, 256)),
-#         transforms.ToTensor()])
 transform = transforms.Compose([
-        transforms.Resize((128, 128)),
+        transforms.Resize((256, 256)),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 transform2 = transforms.Compose([
-        transforms.Resize((128, 128)),
+        transforms.Resize((256, 256)),
         transforms.ToTensor()])
+
